@@ -1,12 +1,40 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
+import './styles/index.css'
+import App from './components/App'
 import * as serviceWorker from './serviceWorker';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+import { ApolloProvider } from 'react-apollo'
+import { ApolloClient } from 'apollo-client'
+import { createHttpLink } from 'apollo-link-http'
+import { InMemoryCache } from 'apollo-cache-inmemory'
+import { ApolloLink, concat } from 'apollo-link';
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+
+const httpLink = createHttpLink({
+	uri: 'https://api.producthunt.com/v2/api/graphql'
+  })
+  const authMiddleware = new ApolloLink((operation, forward) => {
+	// add the authorization to the headers
+	operation.setContext({
+	  headers: {
+		authorization: "Bearer 1ed48ae30d313c946c8d3afd7968108beaf9bc7ad75c59f8dca9ac1d181754b8",
+	  }
+	});
+  
+	return forward(operation);
+  })
+
+  const client = new ApolloClient({
+	link: concat(authMiddleware, httpLink),
+	cache: new InMemoryCache(),
+  })
+
+
+  ReactDOM.render(
+	<ApolloProvider client={client}>
+	  <App />
+	</ApolloProvider>,
+	document.getElementById('root')
+  )
+  serviceWorker.unregister();
